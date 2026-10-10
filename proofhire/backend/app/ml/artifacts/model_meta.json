@@ -1,0 +1,47 @@
+{
+  "model_version": "proofhire-lr-1.0.1",
+  "trained_at": "2026-10-10T17:34:51Z",
+  "sklearn_version": "1.7.2",
+  "python_version": "3.13.7",
+  "selected_model": "M3",
+  "thresholds": {
+    "low": 0.35,
+    "high": 0.7
+  },
+  "feature_order": [
+    "salary_max_month_log",
+    "salary_ratio_vs_role",
+    "salary_spread",
+    "desc_words",
+    "req_words",
+    "exclaim_count",
+    "caps_ratio",
+    "urgency_hits",
+    "fee_amount_log",
+    "has_upfront_fee",
+    "asks_personal_data",
+    "guaranteed_claim",
+    "no_experience_hype",
+    "email_is_free",
+    "email_present",
+    "website_missing",
+    "domain_mismatch",
+    "messaging_only",
+    "no_interview",
+    "vague_desc",
+    "vague_requirements",
+    "phone_present",
+    "work_mode",
+    "employment_type",
+    "application_channel",
+    "interview_mode"
+  ],
+  "dataset": {
+    "type": "synthetic",
+    "rows": 6000,
+    "seed": 42,
+    "generator_commit": null
+  },
+  "sha256_model": "a3f4855c0fc5e8c37e77435d75aa65ac80e76611727f87972927585861839425",
+  "feedback_rows": 0
+}

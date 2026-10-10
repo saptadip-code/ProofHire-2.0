@@ -1,0 +1,49 @@
+{
+  "_meta": {
+    "data_type": "development-lexicon",
+    "source": "ml/data/lexicons.py",
+    "notice": "SYNTHETIC DEVELOPMENT DATA. Fictional companies and invented salary medians; not verified real-world salary or employer data."
+  },
+  "urgency_phrases": [
+    "apply now",
+    "limited seats",
+    "last date today",
+    "hurry",
+    "immediate joining",
+    "urgent hiring",
+    "only few seats",
+    "seats filling fast",
+    "today only",
+    "apply immediately",
+    "offer ends",
+    "don't miss"
+  ],
+  "fee_patterns": [
+    "\\b(?:registration|enrol+ment|processing|joining|application|security|training|verification|documentation|onboarding|admission|interview|courier|certificate|stamp\\s+paper)\\s+(?:fee|fees|charge|charges|deposit|amount)\\b",
+    "\\bsecurity\\s+deposit\\b",
+    "\\b(?:kit|uniform|id\\s*card|laptop|software)\\s+charges?\\b",
+    "\\b(?:joining|starter|welcome)\\s+kit\\b",
+    "\\brefundable\\b",
+    "\\bpay\\s+(?:rs\\.?|inr|\\u20b9)\\s*[\\d,]+",
+    "\\bdeposit\\s+(?:of\\s+)?(?:rs\\.?|inr|\\u20b9)\\s*[\\d,]+"
+  ],
+  "personal_data_patterns": [
+    "\\baadhaa?r\\b",
+    "\\bpan\\s*card\\b",
+    "\\bbank\\s+account\\b",
+    "\\botp\\b",
+    "\\bpassport\\b",
+    "\\bcvv\\b",
+    "\\bphoto\\s+(?:of\\s+)?(?:your\\s+)?id\\b"
+  ],
+  "guaranteed_claim_patterns": [
+    "\\bguarantee[d]?\\s+(?:job|placement|offer|selection)\\b",
+    "\\b100\\s*%\\s*(?:job\\s+)?(?:placement|guarantee|selection)\\b",
+    "\\bassured\\s+(?:selection|placement|job|offer)\\b"
+  ],
+  "no_experience_patterns": [
+    "\\bno\\s+(?:prior\\s+)?experience\\s+(?:is\\s+)?(?:needed|required|necessary)\\b",
+    "\\bwithout\\s+any\\s+experience\\b"
+  ],
+  "negation_pattern": "(?:\\bno\\b|\\bnot\\b|\\bnever\\b|\\bwithout\\b|\\bzero\\b|\\bfree\\s+of\\b|n't)\\s*(?:\\w+\\s+){0,4}$"
+}

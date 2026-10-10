@@ -1,0 +1,150 @@
+{
+  "synthetic_test": {
+    "precision": 0.9822,
+    "recall": 0.8818,
+    "f1": 0.9293,
+    "roc_auc": 0.9827,
+    "pr_auc": 0.9777,
+    "brier": 0.0392,
+    "confusion": [
+      [
+        549,
+        5
+      ],
+      [
+        37,
+        276
+      ]
+    ]
+  },
+  "baselines": {
+    "M0": {
+      "accuracy": 0.5594,
+      "precision": 0.3846,
+      "recall": 0.3674,
+      "f1": 0.3758,
+      "roc_auc": 0.5176,
+      "pr_auc": 0.3697,
+      "brier": 0.4406,
+      "confusion": [
+        [
+          370,
+          184
+        ],
+        [
+          198,
+          115
+        ]
+      ],
+      "name": "DummyClassifier (stratified)",
+      "val_pr_auc": 0.3662
+    },
+    "M1": {
+      "accuracy": 0.94,
+      "precision": 0.9815,
+      "recall": 0.8498,
+      "f1": 0.911,
+      "roc_auc": 0.9674,
+      "pr_auc": 0.96,
+      "brier": 0.0495,
+      "confusion": [
+        [
+          549,
+          5
+        ],
+        [
+          47,
+          266
+        ]
+      ],
+      "name": "LogisticRegression",
+      "val_pr_auc": 0.9532
+    },
+    "M2": {
+      "accuracy": 0.9458,
+      "precision": 0.9683,
+      "recall": 0.8786,
+      "f1": 0.9213,
+      "roc_auc": 0.9739,
+      "pr_auc": 0.9674,
+      "brier": 0.0464,
+      "confusion": [
+        [
+          545,
+          9
+        ],
+        [
+          38,
+          275
+        ]
+      ],
+      "name": "RandomForestClassifier",
+      "val_pr_auc": 0.9642
+    },
+    "M3": {
+      "accuracy": 0.9481,
+      "precision": 0.982,
+      "recall": 0.8722,
+      "f1": 0.9239,
+      "roc_auc": 0.9817,
+      "pr_auc": 0.977,
+      "brier": 0.0409,
+      "confusion": [
+        [
+          549,
+          5
+        ],
+        [
+          40,
+          273
+        ]
+      ],
+      "name": "LogisticRegression",
+      "val_pr_auc": 0.9693
+    },
+    "M4": {
+      "accuracy": 0.9458,
+      "precision": 0.9555,
+      "recall": 0.8914,
+      "f1": 0.9223,
+      "roc_auc": 0.9711,
+      "pr_auc": 0.9604,
+      "brier": 0.0463,
+      "confusion": [
+        [
+          541,
+          13
+        ],
+        [
+          34,
+          279
+        ]
+      ],
+      "name": "HistGradientBoostingClassifier",
+      "val_pr_auc": 0.9605
+    }
+  },
+  "pattern_holdout": {
+    "recall": 0.8616,
+    "n": 224
+  },
+  "handwritten": {
+    "precision": null,
+    "recall": null,
+    "n": 0
+  },
+  "cv": {
+    "pr_auc_mean": 0.9584,
+    "pr_auc_std": 0.0095
+  },
+  "limitations": [
+    "SYNTHETIC BENCHMARK: every training and test listing is machine-generated from phrase banks with fictional companies. These scores are not real-world accuracy.",
+    "The generator and the evidence rules share vocabulary, so synthetic metrics are optimistic.",
+    "About 2% of synthetic labels were randomly flipped (label noise), which also limits achievable precision/recall.",
+    "Precision, recall, F1 and the confusion matrix use a fixed 0.5 decision threshold; risk levels use the thresholds in model_meta.json.",
+    "Pattern-holdout: fake_offer_letter listings never appear in train/val/test; recall is measured on the 224 risky listings of that pattern.",
+    "The independent hand-written set (demo_data/handwritten_eval.csv, Member 4) was not available when these metrics were produced, so handwritten precision/recall are null (n=0).",
+    "Salary benchmarks used by the features are synthetic development medians, not verified salary data.",
+    "No real-world labelled data or user feedback has been used yet (feedback_rows = 0)."
+  ]
+}

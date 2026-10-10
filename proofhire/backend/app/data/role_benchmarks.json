@@ -1,0 +1,239 @@
+{
+  "_meta": {
+    "data_type": "synthetic",
+    "currency": "INR",
+    "unit": "monthly_median",
+    "notice": "SYNTHETIC DEVELOPMENT DATA. Fictional companies and invented salary medians; not verified real-world salary or employer data."
+  },
+  "default": {
+    "internship": 12000,
+    "full_time": 35000,
+    "part_time": 11000,
+    "contract": 28000
+  },
+  "roles": [
+    {
+      "role": "data entry",
+      "keywords": [
+        "data entry"
+      ],
+      "monthly_median_inr": {
+        "internship": 8000,
+        "full_time": 20000,
+        "part_time": 9000,
+        "contract": 16000
+      }
+    },
+    {
+      "role": "content writing",
+      "keywords": [
+        "content writ",
+        "copywrit"
+      ],
+      "monthly_median_inr": {
+        "internship": 10000,
+        "full_time": 28000,
+        "part_time": 10000,
+        "contract": 22000
+      }
+    },
+    {
+      "role": "software engineering",
+      "keywords": [
+        "software developer",
+        "software engineer",
+        "backend developer",
+        "python developer"
+      ],
+      "monthly_median_inr": {
+        "internship": 25000,
+        "full_time": 80000,
+        "part_time": 20000,
+        "contract": 65000
+      }
+    },
+    {
+      "role": "web development",
+      "keywords": [
+        "web developer",
+        "frontend developer",
+        "web development"
+      ],
+      "monthly_median_inr": {
+        "internship": 18000,
+        "full_time": 55000,
+        "part_time": 15000,
+        "contract": 45000
+      }
+    },
+    {
+      "role": "mobile development",
+      "keywords": [
+        "android developer",
+        "mobile developer",
+        "app developer"
+      ],
+      "monthly_median_inr": {
+        "internship": 20000,
+        "full_time": 65000,
+        "part_time": 16000,
+        "contract": 55000
+      }
+    },
+    {
+      "role": "data analysis",
+      "keywords": [
+        "data analyst",
+        "data analytics"
+      ],
+      "monthly_median_inr": {
+        "internship": 20000,
+        "full_time": 60000,
+        "part_time": 16000,
+        "contract": 50000
+      }
+    },
+    {
+      "role": "machine learning",
+      "keywords": [
+        "machine learning",
+        "ml engineer",
+        "data scientist",
+        "data science"
+      ],
+      "monthly_median_inr": {
+        "internship": 25000,
+        "full_time": 90000,
+        "part_time": 20000,
+        "contract": 75000
+      }
+    },
+    {
+      "role": "digital marketing",
+      "keywords": [
+        "digital marketing",
+        "social media",
+        "seo"
+      ],
+      "monthly_median_inr": {
+        "internship": 12000,
+        "full_time": 35000,
+        "part_time": 11000,
+        "contract": 28000
+      }
+    },
+    {
+      "role": "graphic design",
+      "keywords": [
+        "graphic design",
+        "ui designer",
+        "ux designer"
+      ],
+      "monthly_median_inr": {
+        "internship": 12000,
+        "full_time": 38000,
+        "part_time": 11000,
+        "contract": 32000
+      }
+    },
+    {
+      "role": "customer support",
+      "keywords": [
+        "customer support",
+        "customer service",
+        "support executive"
+      ],
+      "monthly_median_inr": {
+        "internship": 9000,
+        "full_time": 24000,
+        "part_time": 9000,
+        "contract": 20000
+      }
+    },
+    {
+      "role": "human resources",
+      "keywords": [
+        "hr executive",
+        "hr intern",
+        "human resources",
+        "recruiter",
+        "talent acquisition"
+      ],
+      "monthly_median_inr": {
+        "internship": 10000,
+        "full_time": 30000,
+        "part_time": 10000,
+        "contract": 26000
+      }
+    },
+    {
+      "role": "sales",
+      "keywords": [
+        "sales executive",
+        "business development",
+        "sales"
+      ],
+      "monthly_median_inr": {
+        "internship": 10000,
+        "full_time": 30000,
+        "part_time": 10000,
+        "contract": 25000
+      }
+    },
+    {
+      "role": "business analysis",
+      "keywords": [
+        "business analyst"
+      ],
+      "monthly_median_inr": {
+        "internship": 18000,
+        "full_time": 60000,
+        "part_time": 15000,
+        "contract": 50000
+      }
+    },
+    {
+      "role": "quality assurance",
+      "keywords": [
+        "qa engineer",
+        "qa intern",
+        "quality analyst",
+        "software tester"
+      ],
+      "monthly_median_inr": {
+        "internship": 15000,
+        "full_time": 45000,
+        "part_time": 13000,
+        "contract": 38000
+      }
+    },
+    {
+      "role": "accounts and finance",
+      "keywords": [
+        "accountant",
+        "accounts executive",
+        "accounts intern",
+        "finance"
+      ],
+      "monthly_median_inr": {
+        "internship": 10000,
+        "full_time": 30000,
+        "part_time": 10000,
+        "contract": 25000
+      }
+    },
+    {
+      "role": "operations",
+      "keywords": [
+        "operations executive",
+        "operations"
+      ],
+      "monthly_median_inr": {
+        "internship": 10000,
+        "full_time": 32000,
+        "part_time": 10000,
+        "contract": 26000
+      }
+    }
+  ]
+}
