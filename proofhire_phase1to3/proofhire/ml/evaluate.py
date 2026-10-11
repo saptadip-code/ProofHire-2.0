@@ -48,12 +48,18 @@ def evaluate_handwritten(model, csv_path: Path) -> dict:
     return {"precision": m["precision"], "recall": m["recall"], "n": int(len(y)), "detail": m}
 
 
-def limitations(handwritten_n: int, holdout_n: int) -> list[str]:
+def limitations(handwritten_n: int, holdout_n: int, threshold_derivation: dict | None = None) -> list[str]:
     hw = (f"Hand-written set (demo_data/handwritten_eval.csv, n={handwritten_n}) is small and written by the team; "
           "treat its precision/recall as indicative only." if handwritten_n else
           "The independent hand-written set (demo_data/handwritten_eval.csv, Member 4) was not available when these "
           "metrics were produced, so handwritten precision/recall are null (n=0).")
-    return [
+    th_line = None
+    if threshold_derivation and threshold_derivation.get("source") == "fallback":
+        th_line = (f"Risk-level thresholds are the fallback {threshold_derivation['low']} / {threshold_derivation['high']}, "
+                   f"not data-derived: on validation the A6 rule gave raw low={threshold_derivation.get('raw_low')} and "
+                   f"high={threshold_derivation.get('raw_high')} ({threshold_derivation['reason']}). Model scores are "
+                   "strongly bimodal, so few listings fall in the medium band.")
+    out = [
         "SYNTHETIC BENCHMARK: every training and test listing is machine-generated from phrase banks with fictional "
         "companies. These scores are not real-world accuracy.",
         "The generator and the evidence rules share vocabulary, so synthetic metrics are optimistic.",
@@ -64,8 +70,13 @@ def limitations(handwritten_n: int, holdout_n: int) -> list[str]:
         f"{holdout_n} risky listings of that pattern.",
         hw,
         "Salary benchmarks used by the features are synthetic development medians, not verified salary data.",
+        "Fictional company names and phrase banks repeat across train/val/test (no listing text is duplicated, but "
+        "names are shared), so synthetic scores are optimistic; split by company would be a harder check.",
         "No real-world labelled data or user feedback has been used yet (feedback_rows = 0).",
     ]
+    if th_line:
+        out.insert(4, th_line)
+    return out
 
 
 def _plots(reports_dir: Path, cm, val_curve, test_curve, thresholds) -> list[str]:
@@ -171,7 +182,7 @@ def run(staging_path: Path, csv_path: Path | None, handwritten_csv: Path, report
         "pattern_holdout": pattern_holdout,
         "handwritten": handwritten,
         "cv": {"pr_auc_mean": st["cv"]["pr_auc_mean"], "pr_auc_std": st["cv"]["pr_auc_std"]},
-        "limitations": limitations(handwritten["n"], pattern_holdout["n"]),
+        "limitations": limitations(handwritten["n"], pattern_holdout["n"], th),
     }
 
     v_p, v_r, _ = precision_recall_curve(y["val"], val_scores)

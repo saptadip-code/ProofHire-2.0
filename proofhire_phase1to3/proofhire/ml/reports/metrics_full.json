@@ -427,9 +427,11 @@
       "The generator and the evidence rules share vocabulary, so synthetic metrics are optimistic.",
       "About 2% of synthetic labels were randomly flipped (label noise), which also limits achievable precision/recall.",
       "Precision, recall, F1 and the confusion matrix use a fixed 0.5 decision threshold; risk levels use the thresholds in model_meta.json.",
+      "Risk-level thresholds are the fallback 0.35 / 0.7, not data-derived: on validation the A6 rule gave raw low=0.1413 and high=0.1752 (gap 0.0339 is below 0.15). Model scores are strongly bimodal, so few listings fall in the medium band.",
       "Pattern-holdout: fake_offer_letter listings never appear in train/val/test; recall is measured on the 224 risky listings of that pattern.",
       "The independent hand-written set (demo_data/handwritten_eval.csv, Member 4) was not available when these metrics were produced, so handwritten precision/recall are null (n=0).",
       "Salary benchmarks used by the features are synthetic development medians, not verified salary data.",
+      "Fictional company names and phrase banks repeat across train/val/test (no listing text is duplicated, but names are shared), so synthetic scores are optimistic; split by company would be a harder check.",
       "No real-world labelled data or user feedback has been used yet (feedback_rows = 0)."
     ]
   }

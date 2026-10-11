@@ -85,3 +85,14 @@ Read-only for M1: `checklist_library.json` (M4), all other backend files (M3).
 15. (A-G3) `ColumnTransformer` selectors are integer positions into `MODEL_INPUT_COLUMNS` instead of the column names shown in A5, because name-based selection requires a pandas DataFrame at inference (forbidden by D5/A14). Step names, transformers and hyper-parameters are unchanged.
 16. (A-G3) `backend/tests/test_ml_api.py` and `ml/tests/test_ml_schemas.py` were updated (stub assertions removed). They need real `fastapi`/`pydantic`/`pytest` and were NOT executed in the authoring sandbox.
 17. (A-G3) No result cache / LLM cache yet (A12); `reload_model()` has a `_clear_caches()` hook for them.
+
+## Files beyond the guidebook A1 table (all inside Member 1 directories)
+- `ml/modeling.py` - shared offline helpers (model factory M0..M4, metrics, A6 thresholds); offline only.
+- `ml/rebuild_artifacts.py` - train -> evaluate -> export in one command; refuses to run unless scikit-learn is 1.7.2.
+- `backend/app/ml/model_store.py` - artifact validation/loading/scoring (no pandas, no pydantic); wrapped by `pipeline.py`.
+- This document lives in `ml/` (not `docs/`, which belongs to Member 4); copy it into `docs/` by agreement if wanted.
+
+## Known state of the thresholds (Phase 3)
+`thresholds` in `model_meta.json` are the A6 FALLBACK 0.35 / 0.70: the literal A6 rule gave raw 0.1413 / 0.1752 on
+validation (gap < 0.15). Result on the synthetic test split: ~3% of listings are `medium`. Changing the rule needs a
+team agreement and a `docs/CONTRACT_CHANGELOG.md` line; it has NOT been changed.
