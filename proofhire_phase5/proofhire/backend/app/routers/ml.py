@@ -1,11 +1,13 @@
 """ML HTTP endpoints (Member 1). Guidebook A11. Mounted by main.py as
     app.include_router(ml.router, prefix='/api/v1/ml')
 
-PHASE 3 (A-G3): /predict is the REAL model score (no evidence, no LLM, no DB). /evidence, /explain and
-/extract-entities still return interim parts (empty evidence/checklist, template text, email-only entities) and
-keep the response header X-ProofHire-Stub: true until A-G4/A-G5. Without a valid loaded model predict / evidence /
-explain return 503 model_unavailable; model-info and metrics return 503 as well; reload returns 500 and keeps the
-old model. model-info and metrics send Cache-Control: public, max-age=300 and an ETag (If-None-Match -> 304).
+PHASE 4 (A-G4): /predict is the real model score only (no evidence, no LLM, no DB). /evidence returns the real
+observed + model evidence (E1..En); /explain returns the full MlResult (evidence, checklist, entities, template
+explanation until A-G5 adds the LLM); /extract-entities returns the normalised A9 entities and needs no model.
+Without a valid loaded model predict / evidence / explain return 503 model_unavailable; model-info and metrics
+return 503 as well; reload returns 500 and keeps the old model. model-info and metrics send
+Cache-Control: public, max-age=300 and an ETag (If-None-Match -> 304). The X-ProofHire-Stub header of earlier
+phases is only sent while pipeline.IS_STUB is True (now False).
 """
 from __future__ import annotations
 
@@ -18,7 +20,7 @@ from typing import Optional
 from fastapi import APIRouter, Header, Request
 from fastapi.responses import JSONResponse, Response
 
-from app.ml import pipeline
+from app.ml import entities, pipeline
 from app.schemas.ml_schemas import (
     EvidenceResponse,
     ExtractEntitiesResponse,
@@ -154,7 +156,7 @@ def ml_explain(listing: ListingInput, x_internal_key: Optional[str] = Header(def
 def ml_extract_entities(listing: ListingInput, x_internal_key: Optional[str] = Header(default=None)):
     if (err := _auth(x_internal_key)) is not None:
         return err
-    body = ExtractEntitiesResponse(entities=pipeline.interim_entities(listing))  # needs no model
+    body = ExtractEntitiesResponse(entities=entities.extract_entities(listing))  # A9; needs no model
     resp = JSONResponse(content=body.model_dump(mode="json"))
     _stub_headers(resp.headers)
     return resp

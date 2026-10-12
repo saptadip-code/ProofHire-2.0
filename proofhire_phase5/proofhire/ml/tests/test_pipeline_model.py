@@ -56,15 +56,19 @@ def test_loaded_model_status_and_real_result(good):
     MlResult.model_validate(r.model_dump())
     assert r.model_version == "proofhire-lr-1.0.0" and r.thresholds.low == 0.35 and r.thresholds.high == 0.70
     assert r.risk_score == round(r.risk_score, 4)
-    assert r.evidence == [] and r.checklist == []  # interim until A-G4, never fabricated
-    assert [e.value for e in r.entities] == ["brightpath.hr@gmail.com"]
+    assert r.evidence and r.evidence[0].id == "E1"  # real evidence since A-G4 (see test_pipeline_explainable.py)
+    assert [(e.type.value, e.value) for e in r.entities] == [
+        ("email", "brightpath.hr@gmail.com"), ("company_name", "brightpath careers")]
 
 
 def test_predict_listing_is_score_only(good, monkeypatch):
     def boom(*a, **k):
-        raise AssertionError("predict must not build entities/evidence")
+        raise AssertionError("predict must not build entities/evidence/checklist/explanation")
 
-    monkeypatch.setattr(pipeline, "interim_entities", boom)
+    monkeypatch.setattr(pipeline.entities_mod, "extract_entities", boom)
+    monkeypatch.setattr(pipeline.evidence_mod, "build_evidence", boom)
+    monkeypatch.setattr(pipeline.checklist_mod, "build_checklist", boom)
+    monkeypatch.setattr(pipeline.template_explainer, "build_template_explanation", boom)
     p = pipeline.predict_listing(ListingInput(**LISTING))
     assert set(p) == {"risk_score", "risk_level", "thresholds", "model_version"}
 

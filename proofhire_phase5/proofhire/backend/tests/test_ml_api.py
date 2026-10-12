@@ -135,20 +135,29 @@ def test_risky_listing_scores_above_corporate_listing(loaded_client):
     assert hi > lo
 
 
-def test_evidence_explain_entities_interim_shapes(loaded_client):
+def test_evidence_explain_entities_real_shapes(loaded_client):
     e = loaded_client.post(f"{PREFIX}/evidence", json=GOOD)
-    assert set(e.json()) == {"risk_score", "risk_level", "evidence"}
-    assert e.headers["X-ProofHire-Stub"] == "true"  # evidence content is still interim (A-G4)
+    assert e.status_code == 200 and set(e.json()) == {"risk_score", "risk_level", "evidence"}
+    assert "X-ProofHire-Stub" not in e.headers  # evidence is real since A-G4
+    ev = e.json()["evidence"]
+    assert ev and [i["id"] for i in ev] == [f"E{n}" for n in range(1, len(ev) + 1)] and len(ev) <= 12
+    assert ev[0]["code"] == "UPFRONT_FEE" and ev[0]["type"] == "observed" and ev[0]["weight"] is None
     x = loaded_client.post(f"{PREFIX}/explain", json=GOOD).json()
     assert {"explanation", "checklist", "entities", "llm_meta"} <= set(x)
     assert x["explanation"]["source"] == "template"
     assert all("id" not in c for c in x["checklist"])
+    ids = {i["id"] for i in x["evidence"]}
+    assert x["explanation"]["key_concerns"]
+    assert all(set(k["evidence_ids"]) <= ids for k in x["explanation"]["key_concerns"])
+    assert x["risk_score"] == loaded_client.post(f"{PREFIX}/predict", json=GOOD).json()["risk_score"]
 
 
 def test_extract_entities_needs_no_model(unloaded_client):
     ent = unloaded_client.post(f"{PREFIX}/extract-entities", json=GOOD)
     assert ent.status_code == 200
-    assert ent.json() == {"entities": [{"type": "email", "value": "brightpath.hr@gmail.com"}]}
+    assert "X-ProofHire-Stub" not in ent.headers
+    assert ent.json() == {"entities": [{"type": "email", "value": "brightpath.hr@gmail.com"},
+                                       {"type": "company_name", "value": "brightpath careers"}]}  # A9: no free-mail domain
 
 
 def test_reload_without_artifacts_fails_honestly(unloaded_client):

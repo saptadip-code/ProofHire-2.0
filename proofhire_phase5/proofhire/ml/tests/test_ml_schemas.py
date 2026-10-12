@@ -40,7 +40,7 @@ def test_valid_edge_inputs():
 
 
 def test_assess_listing_result_matches_schema():
-    """A-G3: real score; evidence/checklist are interim (empty) until A-G4. Skips if the artifact cannot load here."""
+    """A-G4: real score + real evidence / entities. Skips if the artifact cannot load here."""
     from app.ml import pipeline
 
     pipeline._reset_for_tests()
@@ -51,7 +51,8 @@ def test_assess_listing_result_matches_schema():
     MlResult.model_validate(r.model_dump())
     assert 0.0 <= r.risk_score <= 1.0
     assert r.risk_level.value in {"low", "medium", "high"}
-    assert r.evidence == [] and r.checklist == []  # interim until A-G4 (never fabricated)
+    assert r.evidence and r.evidence[0].id == "E1"  # real evidence (A-G4); the fee field alone fires UPFRONT_FEE
+    assert any(e.code == "UPFRONT_FEE" for e in r.evidence)
 
 
 def test_free_mail_domains_contract():
