@@ -1,11 +1,11 @@
 # AI/ML Integration Contract (Member 1)
 
 Documents the guidebook contract; it never overrides it. Status: `implemented` / `pending` / `blocked`.
-Last updated: Phase 5 (A-G5), 2026-10-12. **A-G5: the LLM explanation subsystem is REAL** (`llm_client.py`: Groq/OpenAI-compatible call, optional OpenRouter fallback, strict validation, 24 h cache, rate limiter, circuit breaker) and `with_llm` now takes effect when `LLM_ENABLED=true`; every failure ends in the deterministic template. Still pending: retrain gate + feedback export + hand-written evaluation (A-G6).
+Last updated: Phase 6 (A-G6, final), 2026-10-12. **All eight A11 endpoints, the model lifecycle, `ml/retrain.py` (A13 gates, fail closed) and the A15 tests are implemented.** Remaining blockers are outside Member 1: `demo_data/handwritten_eval.csv` (Member 4), Member 3's `main.py` wiring, and re-running the suites on the pinned venv.
 
 ## Endpoints (prefix `/api/v1/ml`, mounted by `main.py`: `app.include_router(ml.router, prefix='/api/v1/ml')`)
 
-| Method + path | Auth | Status (A-G4) | Behaviour |
+| Method + path | Auth | Status (A-G6) | Behaviour |
 |---|---|---|---|
 | GET `/health` | none | implemented | real `{loaded, model_version, trained_at, sklearn_version (running), llm_enabled, llm_circuit_open (real circuit-breaker state since A-G5)}` |
 | GET `/model-info` | none | implemented | `model_meta.json` of the LOADED model; `Cache-Control: public, max-age=300`, `ETag: "<sha256_model>"`, 304 on `If-None-Match`; 503 `model_unavailable` if not loaded |
@@ -76,8 +76,14 @@ Validation of the model's answer: JSON object with `summary` (str), `key_concern
 Cache: key = SHA-256 of risk level + sorted evidence (id, label, snippet, type, direction) + checklist hints; 256 entries LRU, TTL 24 h; re-validated against the current ids on every hit; failures never cached. Rate limiter: sliding 60 s window, `LLM_RPM_LIMIT` requests; breaker: 3 consecutive failures -> open 120 s -> one recovery attempt.
 Dependency: `httpx` (already in the guidebook requirements for both files; imported lazily, only when a request is made).
 
+## Retrain contract (A-G6) — `ml/retrain.py` — implemented
+`PYTHONPATH=backend python ml/retrain.py --feedback ml/data/feedback.csv --feedback-weight 3 [--dry-run]`.
+Feedback: only `label == 1` + not demo + not `SYN-` id + (`report_count_approved >= 1` if the column exists) + complete + de-duplicated rows; label-0 rows are dropped, never treated as legitimate; zero eligible rows -> exit, nothing changes. Merge with the synthetic train rows via `sample_weight` (default weight 3); M3 only (no model selection); thresholds and all metrics recomputed. Gates (`GATE_NAMES`): `synthetic_pr_auc` (drop <= 0.01), `handwritten_recall` (no drop), `pattern_holdout_recall` (no drop), `artifact_size` (< 10 MB), `ml_tests` (`pytest ml/tests -q` against the candidate via `PROOFHIRE_TEST_ARTIFACT_DIR` / `PROOFHIRE_TEST_REPORTS_DIR`, test-only variables read by `ml/tests/conftest.py`). Baseline and candidate numbers are computed live on the same files at the 0.5 decision threshold. Any missing comparison (no hand-written file, unloadable production model, no pytest) FAILS the gate; no override flag. Promotion: candidate validated with the runtime loader, replaced atomically (meta last), `ml/reports/` copied, version PATCH (MINOR if `feature_order` changed), dated line appended to `ml/CHANGELOG.md`. Report of every run: `ml/build/retrain_report.json` (git-ignored).
+Additions for it: `modeling.fit_model()` (sample weights), `train.run(..., feedback=(X, y, weight))`, `export_artifacts.export(..., version_from=)`, `evaluate.limitations(..., feedback_rows, feedback_weight)`, `ml/rebuild_artifacts.py` (Phase 3).
+Lifecycle (A-G6): `pipeline.load_model()` is idempotent (never drops a loaded model), reloads are serialised by `_RELOAD_LOCK`, the swap happens under `_LOCK`; `/model-info` and `/metrics` honour weak ETags, ETag lists and `*` in `If-None-Match`.
+
 ## Pending (later phases)
-Retrain gate + feedback (A-G6), real hand-written evaluation (needs Member 4's file), and Member 4's `checklist_library.json` (until it exists `checklist` is `[]`).
+Nothing in Member 1's scope. Blocked on others: real hand-written evaluation (Member 4's `demo_data/handwritten_eval.csv`), Member 4's `checklist_library.json` (until it exists `checklist` is `[]`), and the `export_feedback.py` script/SQL for real feedback.
 
 ## Environment variables
 Read: `INTERNAL_API_KEY`; the A10 `LLM_*` set, all optional, read at call time by `llm_client.load_config()` (secrets never logged): `LLM_ENABLED` (must be the literal `true`; default off), `LLM_BASE_URL` (default `https://api.groq.com/openai/v1`), `LLM_API_KEY`, `LLM_MODEL` (default `openai/gpt-oss-120b`), `LLM_FALLBACK_BASE_URL` (default `https://openrouter.ai/api/v1`), `LLM_FALLBACK_API_KEY`, `LLM_FALLBACK_MODEL` (the fallback is used only when key and model are both set), `LLM_TIMEOUT_SECONDS` (12), `LLM_MAX_TOKENS` (450), `LLM_TEMPERATURE` (0.2), `LLM_RPM_LIMIT` (20), `LLM_CACHE_SIZE` (256), `LLM_CACHE_TTL_SECONDS` (86400). Invalid numbers fall back to the default with a warning. Example without secrets: `backend/.env.llm.example`.
@@ -127,3 +133,10 @@ team agreement and a `docs/CONTRACT_CHANGELOG.md` line; it has NOT been changed.
 19. (A-G5) Deliberate deviations from the A10 text, all documented above: the cache key also includes evidence ids, labels and the hints (a cached answer cites ids); one security sentence is appended to the system prompt; fallback is attempted only for the four documented conditions (a refused connection `network_error` or an HTTP 4xx other than 429 goes straight to the template); "no valid concern" is not retried on the fallback; an answer with zero concerns is accepted only when the assessment had no risk-increasing evidence.
 20. (A-G5) Not verified live: no Groq or OpenRouter call was made (no credentials / network). Reasoning models such as `openai/gpt-oss-120b` count reasoning tokens inside `max_tokens` (450); if live answers come back empty or truncated (`bad_json` in `llm_meta.error_code`), raise `LLM_MAX_TOKENS` (an environment change, not a contract change).
 21. (A-G5) The Phase 4 report said "364 passed"; that figure included `backend/tests` (FastAPI) and could not be re-run in the A-G5 sandbox.
+
+## Open items added in Phase 6
+18. (A-G6) `retrain.py` cannot promote until `demo_data/handwritten_eval.csv` exists (fail closed by design). Needs Member 4 (D-G3).
+19. (A-G6) The feedback CSV column set is not specified by the guidebook; `retrain.py` requires `title, company_name, description, label` and uses optional `is_synthetic_demo`, `listing_id`, `report_count_approved`. `scripts/export_feedback.py` / `feedback_query.sql` (Members 3/4) must produce these.
+20. (A-G6) Feedback is positive-only (A13: no report is not proof of safety), so a retrain can drift toward "risky"; the gates and the disclosed limitation are the only guards. A company-grouped split would be a harder benchmark (future work).
+21. (A-G6) `docs/ML_HANDOFF.md` was added in `docs/` (Member 4's folder) because the Phase 6 brief names it; it is a new file, nothing there was edited.
+22. (release review) `retrain.py` blanks SQL-style null tokens in optional feedback columns and `load_dataset()` reads cp1252 CSVs as a fallback; neither changes any contract name or the model.

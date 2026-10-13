@@ -66,7 +66,9 @@ def _previous_meta(artifacts_dir: Path) -> dict | None:
 
 
 def export(staging_path: Path, evaluation_path: Path, artifacts_dir: Path, bump: str = "auto",
-           verbose: bool = True) -> dict:
+           verbose: bool = True, version_from: Path | None = None) -> dict:
+    """`version_from`: directory whose model_meta.json supplies the previous version (retrain.py exports its
+    candidate to a temp dir but the version must continue from the PRODUCTION artifacts)."""
     log = print if verbose else (lambda *a, **k: None)
     st = joblib.load(staging_path)
     ev = json.loads(evaluation_path.read_text(encoding="utf-8"))
@@ -76,7 +78,7 @@ def export(staging_path: Path, evaluation_path: Path, artifacts_dir: Path, bump:
         raise SystemExit("features.FEATURE_ORDER changed since training; re-run ml/train.py")
 
     artifacts_dir.mkdir(parents=True, exist_ok=True)
-    version = next_version(_previous_meta(artifacts_dir), list(F.FEATURE_ORDER), bump)
+    version = next_version(_previous_meta(version_from or artifacts_dir), list(F.FEATURE_ORDER), bump)
 
     tmp = Path(tempfile.mkdtemp(prefix=".export_", dir=artifacts_dir))
     try:

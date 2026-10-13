@@ -1,9 +1,10 @@
 """ML HTTP endpoints (Member 1). Guidebook A11. Mounted by main.py as
     app.include_router(ml.router, prefix='/api/v1/ml')
 
+PHASE 6 (A-G6, final): all eight A11 endpoints are real. Phase 4 notes below still apply.
 PHASE 4 (A-G4): /predict is the real model score only (no evidence, no LLM, no DB). /evidence returns the real
 observed + model evidence (E1..En); /explain returns the full MlResult (evidence, checklist, entities, template
-explanation until A-G5 adds the LLM); /extract-entities returns the normalised A9 entities and needs no model.
+explanation; LLM or template since A-G5); /extract-entities returns the normalised A9 entities and needs no model.
 Without a valid loaded model predict / evidence / explain return 503 model_unavailable; model-info and metrics
 return 503 as well; reload returns 500 and keeps the old model. model-info and metrics send
 Cache-Control: public, max-age=300 and an ETag (If-None-Match -> 304). The X-ProofHire-Stub header of earlier
@@ -66,7 +67,8 @@ def _cached_json(request: Request, content: dict, etag_source: str) -> Response:
     """JSON 200 with Cache-Control public/max-age=300 and a strong ETag; 304 when If-None-Match matches."""
     etag = f'"{etag_source}"'
     headers = {"Cache-Control": "public, max-age=300", "ETag": etag}
-    if request.headers.get("if-none-match") == etag:
+    candidates = {t.strip().removeprefix("W/") for t in request.headers.get("if-none-match", "").split(",")}
+    if etag in candidates or "*" in candidates:
         return Response(status_code=304, headers=headers)
     return JSONResponse(content=content, headers=headers)
 

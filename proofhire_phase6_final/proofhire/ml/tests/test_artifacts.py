@@ -47,7 +47,8 @@ def test_meta_has_exactly_the_guidebook_keys():
     S.validate_meta(META)
     assert META["selected_model"] in ("M3", "M4")
     assert set(META["dataset"]) == {"type", "rows", "seed", "generator_commit"} and META["dataset"]["type"] == "synthetic"
-    assert META["trained_at"].endswith("Z") and META["feedback_rows"] == 0
+    assert META["trained_at"].endswith("Z")
+    assert isinstance(META["feedback_rows"], int) and META["feedback_rows"] >= 0  # > 0 after a promoted retrain
     assert set(META["thresholds"]) == {"low", "high"}
 
 

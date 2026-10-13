@@ -56,7 +56,8 @@ class ModelNotLoadedError(RuntimeError):
     """Raised when no valid artifact is loaded (or a reload failed)."""
 
 
-_LOCK = threading.Lock()
+_LOCK = threading.Lock()  # guards the singleton reference (swap is a single assignment under this lock)
+_RELOAD_LOCK = threading.Lock()  # serialises reloads so two validations never race to swap
 _STATE: Optional[store.LoadedArtifacts] = None
 _LOAD_ERROR: Optional[str] = None
 _ATTEMPTED = False
@@ -218,7 +219,11 @@ def assess_listing(listing: ListingInput, with_llm: bool = True) -> MlResult:
 
 
 def load_model() -> None:
-    """Called once from FastAPI lifespan startup. Never raises; on failure model_status()['loaded'] is False."""
+    """Called once from FastAPI lifespan startup. Never raises; on failure model_status()['loaded'] is False.
+    Idempotent: when a model is already loaded it does nothing (use reload_model() to swap in a new artifact), so a
+    second call can never drop a working model."""
+    if _STATE is not None:
+        return
     _try_load()
 
 
@@ -226,14 +231,15 @@ def reload_model() -> dict:
     """Re-read artifacts, validate, swap atomically. Returns the new model_meta dict. On failure the old model is
     kept and ModelNotLoadedError is raised."""
     global _STATE, _LOAD_ERROR, _ATTEMPTED
-    try:
-        loaded = store.load_artifacts()  # build + validate the new object first
-    except store.ArtifactError as exc:
-        log.error("ML reload failed, previous model kept: %s", exc)
-        raise ModelNotLoadedError(str(exc)) from exc
-    with _LOCK:
-        _STATE, _LOAD_ERROR, _ATTEMPTED = loaded, None, True
-    _clear_caches()
+    with _RELOAD_LOCK:
+        try:
+            loaded = store.load_artifacts()  # build + validate the new object first (sklearn, meta, SHA-256, warm-up)
+        except store.ArtifactError as exc:
+            log.error("ML reload failed, previous model kept: %s", exc)
+            raise ModelNotLoadedError(str(exc)) from exc
+        with _LOCK:  # atomic swap: readers see the old or the new model, never a mix
+            _STATE, _LOAD_ERROR, _ATTEMPTED = loaded, None, True
+        _clear_caches()
     log.info("ML model reloaded: %s", loaded.meta["model_version"])
     return dict(loaded.meta)
 

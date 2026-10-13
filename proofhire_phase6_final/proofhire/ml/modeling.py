@@ -72,7 +72,12 @@ def load_dataset(csv_path: Path = DEFAULT_CSV):
     """Read the synthetic CSV as strings (blanks stay ''), per guidebook A3 (no cleaning step)."""
     import pandas as pd
 
-    return pd.read_csv(csv_path, dtype=str, keep_default_na=False, encoding="utf-8")
+    # utf-8-sig: also accepts Excel's "CSV UTF-8" (BOM) without mangling the first column name. Excel's plain "CSV
+    # (Comma delimited)" on Windows writes cp1252 (curly quotes, en dashes): fall back to it instead of crashing.
+    try:
+        return pd.read_csv(csv_path, dtype=str, keep_default_na=False, encoding="utf-8-sig")
+    except UnicodeDecodeError:
+        return pd.read_csv(csv_path, dtype=str, keep_default_na=False, encoding="cp1252")
 
 
 def build_matrix(df) -> tuple[np.ndarray, np.ndarray]:
@@ -152,6 +157,15 @@ def make_model(model_id: str):
         clf = HistGradientBoostingClassifier(max_iter=200, learning_rate=0.08, max_depth=6, random_state=SEED)
         return Pipeline([("prep", _structured_prep()), ("clf", clf)])
     raise ValueError(f"unknown model id {model_id!r}")
+
+
+def fit_model(model, X, y, sample_weight=None):
+    """Fit M0..M4; `sample_weight` (used by retrain.py for feedback rows) is routed to the final classifier."""
+    if sample_weight is None:
+        return model.fit(X, y)
+    if isinstance(model, Pipeline):
+        return model.fit(X, y, clf__sample_weight=np.asarray(sample_weight, dtype=float))
+    return model.fit(X, y, sample_weight=np.asarray(sample_weight, dtype=float))
 
 
 def positive_scores(model, X) -> np.ndarray:

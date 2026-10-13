@@ -48,11 +48,18 @@ def evaluate_handwritten(model, csv_path: Path) -> dict:
     return {"precision": m["precision"], "recall": m["recall"], "n": int(len(y)), "detail": m}
 
 
-def limitations(handwritten_n: int, holdout_n: int, threshold_derivation: dict | None = None) -> list[str]:
+def limitations(handwritten_n: int, holdout_n: int, threshold_derivation: dict | None = None,
+                feedback_rows: int = 0, feedback_weight: float | None = None) -> list[str]:
     hw = (f"Hand-written set (demo_data/handwritten_eval.csv, n={handwritten_n}) is small and written by the team; "
           "treat its precision/recall as indicative only." if handwritten_n else
           "The independent hand-written set (demo_data/handwritten_eval.csv, Member 4) was not available when these "
           "metrics were produced, so handwritten precision/recall are null (n=0).")
+    if feedback_rows:
+        fb = (f"{feedback_rows} approved-report listings (label 1 only, sample weight {feedback_weight}) were merged "
+              "into training. Unreported listings are never labelled legitimate, so this feedback is positive-only and "
+              "can bias the model toward 'risky'; approvals come from human moderation and may be wrong.")
+    else:
+        fb = "No real-world labelled data or user feedback has been used yet (feedback_rows = 0)."
     th_line = None
     if threshold_derivation and threshold_derivation.get("source") == "fallback":
         th_line = (f"Risk-level thresholds are the fallback {threshold_derivation['low']} / {threshold_derivation['high']}, "
@@ -72,7 +79,11 @@ def limitations(handwritten_n: int, holdout_n: int, threshold_derivation: dict |
         "Salary benchmarks used by the features are synthetic development medians, not verified salary data.",
         "Fictional company names and phrase banks repeat across train/val/test (no listing text is duplicated, but "
         "names are shared), so synthetic scores are optimistic; split by company would be a harder check.",
-        "No real-world labelled data or user feedback has been used yet (feedback_rows = 0).",
+        "Synthetic-pattern leakage: the generator's phrase banks, the lexicons behind the features and the evidence "
+        "rules share vocabulary, so the model can learn the generator's own patterns; the pattern-holdout and the "
+        "hand-written set are the only checks that do not share them. A high synthetic score does not show the "
+        "model recognises real scams.",
+        fb,
     ]
     if th_line:
         out.insert(4, th_line)
@@ -182,7 +193,8 @@ def run(staging_path: Path, csv_path: Path | None, handwritten_csv: Path, report
         "pattern_holdout": pattern_holdout,
         "handwritten": handwritten,
         "cv": {"pr_auc_mean": st["cv"]["pr_auc_mean"], "pr_auc_std": st["cv"]["pr_auc_std"]},
-        "limitations": limitations(handwritten["n"], pattern_holdout["n"], th),
+        "limitations": limitations(handwritten["n"], pattern_holdout["n"], th, st.get("feedback_rows", 0),
+                                st.get("feedback_weight")),
     }
 
     v_p, v_r, _ = precision_recall_curve(y["val"], val_scores)

@@ -4,12 +4,16 @@ A-G3: /predict serves the REAL model. Tests that need a loaded model use `loaded
 loader's reason) when the committed artifact cannot load in the current environment - e.g. it was trained with a
 different scikit-learn than the one running. Tests for the "no model" behaviour point the loader at an empty dir.
 """
+import json
+import shutil
+
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from app.ml import model_store, pipeline
+from app.ml import llm_client, model_store, pipeline
 from app.routers import ml
+from app.schemas.ml_schemas import MlResult
 
 PREFIX = "/api/v1/ml"
 GOOD = {
@@ -26,8 +30,15 @@ EXPECTED_ROUTES = {
 }
 
 
+LLM_VARS = ("LLM_ENABLED", "LLM_BASE_URL", "LLM_API_KEY", "LLM_MODEL", "LLM_FALLBACK_BASE_URL", "LLM_FALLBACK_API_KEY",
+            "LLM_FALLBACK_MODEL")
+
+
 def _make_client(monkeypatch):
     monkeypatch.delenv("INTERNAL_API_KEY", raising=False)
+    for name in LLM_VARS:  # tests never reach a real provider, whatever the developer's shell/.env holds
+        monkeypatch.delenv(name, raising=False)
+    llm_client.reset_state()
     pipeline._reset_for_tests()
     app = FastAPI()
     app.include_router(ml.router, prefix=PREFIX)  # same call main.py must make
@@ -206,3 +217,93 @@ def test_auth_accepts_correct_key(loaded_client, monkeypatch, path):
 def test_get_endpoints_need_no_key(client, monkeypatch):
     monkeypatch.setenv("INTERNAL_API_KEY", "secret")
     assert client.get(f"{PREFIX}/health").status_code == 200
+
+
+# ---- A-G6: caching, LLM modes, lifecycle over HTTP
+def test_etag_matching_accepts_weak_lists_and_star(loaded_client):
+    first = loaded_client.get(f"{PREFIX}/model-info")
+    etag = first.headers["etag"]
+    for header in (etag, f"W/{etag}", f'"other", {etag}', "*"):
+        assert loaded_client.get(f"{PREFIX}/model-info", headers={"If-None-Match": header}).status_code == 304
+    assert loaded_client.get(f"{PREFIX}/model-info", headers={"If-None-Match": '"stale"'}).status_code == 200
+
+
+def test_predict_never_builds_evidence_or_calls_the_llm(loaded_client, monkeypatch):
+    def boom(*a, **k):
+        raise AssertionError("predict must not run the rest of the pipeline")
+
+    monkeypatch.setattr(pipeline, "assess_listing", boom)
+    monkeypatch.setattr(llm_client, "generate_explanation", boom)
+    r = loaded_client.post(f"{PREFIX}/predict", json=GOOD)
+    assert r.status_code == 200 and set(r.json()) == {"risk_score", "risk_level", "thresholds", "model_version"}
+
+
+def test_evidence_never_calls_the_llm(loaded_client, monkeypatch):
+    monkeypatch.setenv("LLM_ENABLED", "true")
+    monkeypatch.setenv("LLM_API_KEY", "test-key-not-real")
+
+    def boom(*a, **k):
+        raise AssertionError("evidence must not call the LLM")
+
+    monkeypatch.setattr(llm_client, "generate_explanation", boom)
+    assert loaded_client.post(f"{PREFIX}/evidence", json=GOOD).status_code == 200
+
+
+def test_explain_without_any_llm_key_uses_the_template(loaded_client):
+    assert loaded_client.get(f"{PREFIX}/health").json()["llm_enabled"] is False
+    body = loaded_client.post(f"{PREFIX}/explain", json=GOOD).json()
+    MlResult.model_validate(body)
+    assert body["explanation"]["source"] == "template" and body["llm_meta"]["provider"] == "template"
+
+
+def test_explain_with_a_mocked_llm_keeps_the_schema_and_the_score(loaded_client, monkeypatch):
+    llm_json = {"summary": "This listing shows signals often linked to fee-based job offers.",
+                "key_concerns": [{"text": "A fee is requested.", "evidence_ids": ["E1"]}],
+                "what_to_verify": ["Ask for a written offer."]}
+    monkeypatch.setenv("LLM_ENABLED", "true")
+    monkeypatch.setenv("LLM_API_KEY", "test-key-not-real")
+    monkeypatch.setattr(llm_client, "_post_json", lambda url, key, body, timeout: (
+        200, json.dumps({"choices": [{"message": {"content": json.dumps(llm_json)}}]})))
+    llm_client.reset_state()
+    assert loaded_client.get(f"{PREFIX}/health").json()["llm_enabled"] is True
+    body = loaded_client.post(f"{PREFIX}/explain", json=GOOD).json()
+    MlResult.model_validate(body)
+    assert body["explanation"]["source"] == "llm" and body["llm_meta"]["success"] is True
+    assert body["risk_score"] == loaded_client.post(f"{PREFIX}/predict", json=GOOD).json()["risk_score"]  # LLM never moves it
+
+
+def test_llm_failure_over_http_still_returns_200_with_template(loaded_client, monkeypatch):
+    monkeypatch.setenv("LLM_ENABLED", "true")
+    monkeypatch.setenv("LLM_API_KEY", "test-key-not-real")
+    monkeypatch.setattr(llm_client, "_post_json", lambda *a, **k: (503, ""))
+    llm_client.reset_state()
+    r = loaded_client.post(f"{PREFIX}/explain", json=GOOD)
+    assert r.status_code == 200 and r.json()["explanation"]["source"] == "template"
+    assert r.json()["llm_meta"]["success"] is False
+
+
+def test_failed_reload_over_http_keeps_serving_the_previous_model(loaded_client, monkeypatch, tmp_path):
+    working = tmp_path / "artifacts"
+    shutil.copytree(model_store.ARTIFACT_DIR, working)
+    monkeypatch.setattr(model_store, "ARTIFACT_DIR", working)
+    before = loaded_client.post(f"{PREFIX}/predict", json=GOOD).json()
+    with open(working / model_store.MODEL_FILENAME, "ab") as fh:
+        fh.write(b"corrupt")  # SHA-256 no longer matches
+    r = loaded_client.post(f"{PREFIX}/reload")
+    assert r.status_code == 500 and r.json()["error"]["code"] == "internal_error"
+    health = loaded_client.get(f"{PREFIX}/health").json()
+    assert health["loaded"] is True and health["model_version"] == before["model_version"]
+    assert loaded_client.post(f"{PREFIX}/predict", json=GOOD).json() == before
+
+
+def test_reload_over_http_clears_the_result_cache(loaded_client):
+    loaded_client.post(f"{PREFIX}/explain", json=GOOD)
+    assert len(pipeline._RESULT_CACHE) > 0
+    assert loaded_client.post(f"{PREFIX}/reload").status_code == 200
+    assert len(pipeline._RESULT_CACHE) == 0
+
+
+def test_load_model_is_idempotent_and_never_drops_a_working_model(loaded_client, monkeypatch, tmp_path):
+    monkeypatch.setattr(model_store, "ARTIFACT_DIR", tmp_path)  # a second startup call would fail to load
+    pipeline.load_model()
+    assert pipeline.model_status()["loaded"] is True

@@ -41,18 +41,33 @@ from app.ml import features as F  # noqa: E402
 STAGING = M.BUILD_DIR / "staging.joblib"
 
 
-def cross_validate_m3(X, y, folds: int = 5) -> dict:
-    """5-fold stratified CV on the TRAIN rows only: mean/std PR-AUC of M3."""
+def _with_feedback(X, y, feedback):
+    """Append feedback rows (X_fb, y_fb, weight) to a training set; returns (X, y, sample_weight or None)."""
+    if feedback is None:
+        return X, y, None
+    X_fb, y_fb, weight = feedback
+    return (np.vstack([X, X_fb]), np.concatenate([y, y_fb]),
+            np.concatenate([np.ones(len(y)), np.full(len(y_fb), float(weight))]))
+
+
+def cross_validate_m3(X, y, folds: int = 5, feedback=None) -> dict:
+    """5-fold stratified CV on the TRAIN rows only: mean/std PR-AUC of M3. Feedback rows (retrain.py) are added to
+    every fold's TRAINING part only; folds are always scored on synthetic rows."""
     skf = StratifiedKFold(n_splits=folds, shuffle=True, random_state=M.SEED)
     scores = []
     for tr, va in skf.split(X, y):
-        model = clone(M.make_model("M3")).fit(X[tr], y[tr])
+        Xf, yf, wf = _with_feedback(X[tr], y[tr], feedback)
+        model = M.fit_model(clone(M.make_model("M3")), Xf, yf, wf)
         scores.append(float(average_precision_score(y[va], M.positive_scores(model, X[va]))))
     return {"pr_auc_mean": round(float(np.mean(scores)), 4), "pr_auc_std": round(float(np.std(scores)), 4),
             "folds": [round(s, 4) for s in scores]}
 
 
-def run(csv_path: Path, out_path: Path, accept_challenger: bool = False, verbose: bool = True) -> dict:
+def run(csv_path: Path, out_path: Path, accept_challenger: bool = False, verbose: bool = True,
+        feedback=None) -> dict:
+    """`feedback` = (X_fb, y_fb, weight) from retrain.py (approved-report rows, label 1). With feedback, M3 is the
+    only candidate (A13 "refits M3"): M3 is fitted on train + weighted feedback, the thresholds come from that fit's
+    val scores, and the production refit uses train + val + weighted feedback. M0/M1/M2/M4 stay synthetic-only."""
     log = print if verbose else (lambda *a, **k: None)
     df = M.load_dataset(csv_path)
     csv_sha = M.sha256_file(csv_path)
@@ -75,29 +90,39 @@ def run(csv_path: Path, out_path: Path, accept_challenger: bool = False, verbose
     # --- steps 1-2: fit M0..M4 on train, score val
     models, val_pr_auc = {}, {}
     for mid in ("M0", "M1", "M2", "M3", "M4"):
-        model = M.make_model(mid).fit(X_tr, y_tr)
+        if mid == "M3" and feedback is not None:
+            Xf, yf, wf = _with_feedback(X_tr, y_tr, feedback)
+            model = M.fit_model(M.make_model(mid), Xf, yf, wf)
+        else:
+            model = M.make_model(mid).fit(X_tr, y_tr)
         models[mid] = model
         val_pr_auc[mid] = float(average_precision_score(y_va, M.positive_scores(model, X_va)))
         log(f"  {mid} fitted; val PR-AUC = {val_pr_auc[mid]:.4f}")
 
     # --- step 6: selection (validation only)
-    selected, reason = M.select_model(val_pr_auc["M3"], val_pr_auc["M4"], accept_challenger)
+    if feedback is not None:
+        selected, reason = "M3", "retrain with feedback: M3 is refitted (guidebook A13); no model selection"
+    else:
+        selected, reason = M.select_model(val_pr_auc["M3"], val_pr_auc["M4"], accept_challenger)
     log(f"selected model: {selected} ({reason})")
 
     # --- step 3: CV for M3
-    cv = cross_validate_m3(X_tr, y_tr)
+    cv = cross_validate_m3(X_tr, y_tr, feedback=feedback)
     log("M3 5-fold CV PR-AUC:", cv["pr_auc_mean"], "+/-", cv["pr_auc_std"])
 
     # --- step 4: pattern-holdout model = M3 refit without fake_offer_letter
     keep = (parts["train"]["scam_pattern"] != M.HOLDOUT_PATTERN).to_numpy()
     excluded = int((~keep).sum())
-    holdout_model = M.make_model("M3").fit(X_tr[keep], y_tr[keep])
+    Xh, yh, wh = _with_feedback(X_tr[keep], y_tr[keep], feedback)
+    holdout_model = M.fit_model(M.make_model("M3"), Xh, yh, wh)
     log(f"pattern-holdout M3 fitted on {int(keep.sum())} train rows ({excluded} {M.HOLDOUT_PATTERN} rows excluded)")
 
     # --- step 7: production = selected model refit on train+val
     X_all, y_all = np.vstack([X_tr, X_va]), np.concatenate([y_tr, y_va])
-    production = M.make_model(selected).fit(X_all, y_all)
-    log(f"production {selected} refit on train+val ({len(y_all)} rows)")
+    Xp, yp, wp = _with_feedback(X_all, y_all, feedback)
+    production = M.fit_model(M.make_model(selected), Xp, yp, wp)
+    n_fb = 0 if feedback is None else len(feedback[1])
+    log(f"production {selected} refit on train+val ({len(y_all)} rows) + {n_fb} feedback rows")
 
     staging = {
         "run_id": uuid.uuid4().hex,
@@ -121,7 +146,8 @@ def run(csv_path: Path, out_path: Path, accept_challenger: bool = False, verbose
         "holdout_excluded_rows": excluded,
         "production": production,
         "production_train_rows": int(len(y_all)),
-        "feedback_rows": 0,  # no feedback merged until A-G6 retrain.py
+        "feedback_rows": 0 if feedback is None else int(len(feedback[1])),
+        "feedback_weight": None if feedback is None else float(feedback[2]),
     }
     out_path.parent.mkdir(parents=True, exist_ok=True)
     (out_path.parent / ".gitignore").write_text("*\n!.gitignore\n", encoding="utf-8")
