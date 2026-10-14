@@ -1,0 +1,63 @@
+ProofHire backend - build status
+
+PHASE 1 - Foundation and database (B-G1)                                  files written
+  app/core/config.py, app/db/base.py, session.py, models.py, init_db.py,
+  app/core/errors.py, app/schemas/health.py, app/routers/health.py, app/main.py,
+  .env.example, requirements*.txt, .gitignore, README.md, pytest.ini, tests/
+
+PHASE 2 - Authentication and security (B-G2)                              files written
+  app/core/security.py, deps.py, schemas/auth.py, routers/auth.py, db/seed.py
+  tests/: test_security.py, test_auth.py, test_deps.py, test_seed.py
+
+PHASE 3 - Assessment engine and APIs (B-G3)                               files written
+  app/schemas/assessment.py          ListingInput (5.2), AssessmentResult/Created (5.3), list models
+  app/services/ml_gateway.py         the only boundary to Member 1's ML package (PENDING real files)
+  app/services/connection_service.py connections + masking (B6)
+  app/services/assessment_service.py create (one transaction), get, list, delete, access rules
+  app/routers/assessments.py         POST/GET /assessments, GET/DELETE /assessments/{id}
+  app/main.py                        registers the assessments router (only change to Phase 1/2 code)
+  tests/: test_assessment_schemas.py, test_ml_gateway.py, test_assessments_api.py,
+          ml_fakes.py (TEST-ONLY fakes), conftest.py (+ `ml` fixture, additive)
+  docs/ML_INTEGRATION.md, docs/CONTRACT_CHANGELOG.md (Phase 3 clarifications)
+
+PHASE 4 - Checklist, compare and connections (B-G4)                       files written
+  app/schemas/assessment.py          + ChecklistPatch/ChecklistPatchResult, CompareRequest/CompareRow/CompareResult
+  app/services/assessment_service.py + update_checklist_item (owner check, then item must belong to the assessment)
+  app/services/compare_service.py    NEW: compare rows, "lower risk wins"
+  app/routers/assessments.py         + PATCH /{id}/checklist/{item_id}, POST /compare
+  connection_service.py              UNCHANGED: connections + masking were already built in Phase 3 (B6)
+  tests/: test_checklist.py, test_compare.py, test_connections.py (new); no Phase 1-3 test edited
+  docs/CONTRACT_CHANGELOG.md, README.md (Phase 4 notes)
+
+PHASE 5 - Reports and admin moderation (B-G5, first part)                files written
+  app/schemas/report.py              NEW: ReportCreate/Created/Out, AdminReportItem/Page, ReportModerate
+  app/services/report_service.py     NEW: create (404/409), mine, admin queue, moderate (404/409)
+  app/routers/reports.py             NEW: POST /reports, GET /reports/mine
+  app/routers/admin.py               NEW: GET /admin/reports, PATCH /admin/reports/{id} (require_admin)
+  app/main.py                        registers the two new routers (only change to earlier code)
+  tests/test_reports.py              NEW: creation, validation, duplicates, auth, listing, moderation
+  docs/CONTRACT_CHANGELOG.md, README.md (Phase 5 notes)
+  NOT in Phase 5: dashboard endpoints, 429 rate limit, lockfile (later phases)
+
+PHASE 6 - Dashboard and model metrics (B-G5, second part)                files written
+  app/schemas/dashboard.py           NEW: DashboardSummary, TrendPoint and parts
+  app/services/dashboard_service.py  NEW: summary + trends SQL, TTL caches (30 s / 60 s), metrics.json reader and validator
+  app/routers/dashboard.py           NEW: GET /dashboard/summary, /trends, /model-metrics (public)
+  app/main.py                        registers the dashboard router (only change to earlier code)
+  tests/test_dashboard.py            NEW: calculations, demo exclusion, date ranges, parameters, cache, metrics-file handling
+  docs/CONTRACT_CHANGELOG.md, docs/ML_INTEGRATION.md, README.md (Phase 6 notes)
+  NOT in Phase 6: 429 rate limit, requirements.lock.txt, feedback_query.sql, Aiven/Render prep (next phase)
+
+STATUS KEY
+  COMPLETE (code written):  all Phase 3 endpoints, persistence, access rules, connections, masking
+  TEST-ONLY MOCKS:          tests/ml_fakes.py (fake app.ml.pipeline / app.schemas.ml_schemas)
+  PENDING ML INTEGRATION:   real app/ml/pipeline.py, app/schemas/ml_schemas.py (Member 1)
+
+TEST STATUS: Phases 1-5 were run by the project owner on their own laptop: all passed (after one test-only fix in Phase 5).
+Phase 6 could NOT be run by its author: this sandbox cannot install FastAPI, SQLAlchemy, bcrypt, httpx or pytest (package
+index blocked). What did run for Phase 6: python compileall; the metrics.json reader, the cache and the trend zero-filling
+exercised through the real service code with the database/web libraries stubbed; and the earlier schema checks. The SQL
+queries and tests/test_dashboard.py have NOT been executed. Run `python -m pytest -q` in backend/ and report the output.
+
+NEXT: Phase 7 - hardening (B-G6): 429 rate limit on POST /assessments, requirements.lock.txt, feedback_query.sql, Aiven/Render prep.
+Still pending from Member 1: app/ml/* and app/schemas/ml_schemas.py, artifacts (metrics.json, model_meta.json).

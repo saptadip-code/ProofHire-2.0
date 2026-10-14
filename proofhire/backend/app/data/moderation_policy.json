@@ -1,0 +1,54 @@
+{
+  "version": "1.0.0",
+  "general_rule": "Approve only reports with specific, checkable details. Never approve reports that name private individuals.",
+  "report_types": {
+    "advance_fee": {
+      "acceptance_rule": "The report must describe a specific payment request: the amount, what it was called, and how it was asked for.",
+      "rejection_reasons": [
+        "No payment request is described",
+        "Fee was requested after a verified, signed offer from a confirmed employer",
+        "Description is too vague to check"
+      ]
+    },
+    "impersonation": {
+      "acceptance_rule": "The report must name the genuine organisation being imitated and explain what differs, such as a look-alike domain or email address.",
+      "rejection_reasons": [
+        "No organisation or identifier is named",
+        "The listing and the named organisation are not shown to differ",
+        "Description is too vague to check"
+      ]
+    },
+    "personal_data_request": {
+      "acceptance_rule": "The report must say which documents or details were requested (for example Aadhaar, PAN, bank details, OTP) and at what stage.",
+      "rejection_reasons": [
+        "No request for personal data is described",
+        "Request was a normal step after a verified offer",
+        "Description is too vague to check"
+      ]
+    },
+    "fake_company": {
+      "acceptance_rule": "The report must give a checkable reason the company appears not to exist, such as no registration found, a non-working website or an address that does not exist.",
+      "rejection_reasons": [
+        "No checkable reason is given",
+        "Company registration was found and matches the listing",
+        "Description is too vague to check"
+      ]
+    },
+    "harassment": {
+      "acceptance_rule": "The report must describe the conduct that occurred during the hiring process without naming private individuals.",
+      "rejection_reasons": [
+        "Report names a private individual",
+        "No conduct during the hiring process is described",
+        "Description is too vague to check"
+      ]
+    },
+    "other": {
+      "acceptance_rule": "The report must describe a specific, checkable concern about the listing that does not fit another type.",
+      "rejection_reasons": [
+        "No specific concern is described",
+        "The concern is an opinion without checkable detail",
+        "Description is too vague to check"
+      ]
+    }
+  }
+}

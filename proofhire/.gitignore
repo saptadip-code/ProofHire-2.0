@@ -1,0 +1,28 @@
+# Secrets and local config
+.env
+*.env
+!.env.example
+backend/.env
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Node / frontend
+node_modules/
+dist/
+
+# ML working data (guidebook 11.3)
+ml/data/feedback.csv
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+ml/build/

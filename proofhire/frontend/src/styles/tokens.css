@@ -1,0 +1,55 @@
+/* Design tokens. Palette is exactly Section C5; neutrals are derived from navy with color-mix. */
+:root {
+  --navy: #0b1f3a;
+  --teal: #0f9d8f;
+  --risk-low: #16a34a;
+  --risk-medium: #d97706;
+  --risk-high: #dc2626;
+  --light: #f6f8fb;
+
+  --bg: var(--light);
+  --surface: #ffffff;
+  --surface-alt: color-mix(in srgb, var(--navy) 4%, #ffffff);
+  --text: var(--navy);
+  --text-muted: color-mix(in srgb, var(--navy) 72%, #ffffff);
+  --border: color-mix(in srgb, var(--navy) 16%, #ffffff);
+
+  /* Teal as text needs a darker ink on light surfaces (>= 4.5:1). Buttons use navy text on teal (4.9:1). */
+  --teal-ink: color-mix(in srgb, var(--teal) 55%, var(--navy));
+  --teal-tint: color-mix(in srgb, var(--teal) 12%, #ffffff);
+  --focus: var(--teal-ink);
+
+  --low-ink: color-mix(in srgb, var(--risk-low) 50%, var(--navy));
+  --medium-ink: color-mix(in srgb, var(--risk-medium) 50%, var(--navy));
+  --high-ink: color-mix(in srgb, var(--risk-high) 50%, var(--navy));
+  --low-tint: color-mix(in srgb, var(--risk-low) 12%, #ffffff);
+  --medium-tint: color-mix(in srgb, var(--risk-medium) 12%, #ffffff);
+  --high-tint: color-mix(in srgb, var(--risk-high) 10%, #ffffff);
+
+  --radius: 12px;
+  --gutter: 16px;
+  --maxw: 1100px;
+  --shadow: 0 1px 2px color-mix(in srgb, var(--navy) 10%, transparent);
+  --font: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+:root[data-theme='dark'] {
+  --bg: var(--navy);
+  --surface: color-mix(in srgb, var(--navy) 90%, var(--light));
+  --surface-alt: color-mix(in srgb, var(--navy) 82%, var(--light));
+  --text: var(--light);
+  --text-muted: color-mix(in srgb, var(--light) 78%, var(--navy));
+  --border: color-mix(in srgb, var(--light) 24%, var(--navy));
+
+  --teal-ink: color-mix(in srgb, var(--teal) 70%, var(--light));
+  --teal-tint: color-mix(in srgb, var(--teal) 22%, var(--surface));
+
+  --low-ink: color-mix(in srgb, var(--risk-low) 55%, var(--light));
+  --medium-ink: color-mix(in srgb, var(--risk-medium) 55%, var(--light));
+  --high-ink: color-mix(in srgb, var(--risk-high) 55%, var(--light));
+  --low-tint: color-mix(in srgb, var(--risk-low) 22%, var(--surface));
+  --medium-tint: color-mix(in srgb, var(--risk-medium) 22%, var(--surface));
+  --high-tint: color-mix(in srgb, var(--risk-high) 22%, var(--surface));
+
+  --shadow: none;
+}

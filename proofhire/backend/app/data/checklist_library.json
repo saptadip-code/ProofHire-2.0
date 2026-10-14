@@ -1,0 +1,199 @@
+[
+  {
+    "code": "CHK_NO_FEE",
+    "text": "Do not pay any fee, deposit or kit charge before a signed offer from a verified employer. Genuine employers do not charge applicants to apply, interview or join.",
+    "priority": 1,
+    "triggers": [
+      "UPFRONT_FEE"
+    ]
+  },
+  {
+    "code": "CHK_NO_OTP",
+    "text": "Never share an OTP, card PIN, CVV or UPI PIN with a recruiter. No hiring process needs them.",
+    "priority": 1,
+    "triggers": [
+      "PERSONAL_DATA_REQUEST",
+      "UPFRONT_FEE"
+    ]
+  },
+  {
+    "code": "CHK_ID_DOCS",
+    "text": "Do not send Aadhaar, PAN, passport or bank details before you have verified the employer and received a written offer. Ask why each document is needed and when.",
+    "priority": 1,
+    "triggers": [
+      "PERSONAL_DATA_REQUEST"
+    ]
+  },
+  {
+    "code": "CHK_PAY_REALITY",
+    "text": "Compare the stated pay with similar roles on several job boards. Pay far above the usual range for the role is a reason to verify more carefully.",
+    "priority": 2,
+    "triggers": [
+      "UNREALISTIC_PAY"
+    ]
+  },
+  {
+    "code": "CHK_GUARANTEE",
+    "text": "Treat any guarantee of a job or placement as a reason to ask for details in writing. Ask what selection steps apply and who makes the final decision.",
+    "priority": 2,
+    "triggers": [
+      "GUARANTEED_OFFER_CLAIM"
+    ]
+  },
+  {
+    "code": "CHK_LEGAL_NAME",
+    "text": "Ask for the company's registered legal name and look it up in the MCA company search (mca.gov.in). Check that the address and directors are consistent with the listing.",
+    "priority": 2,
+    "triggers": [
+      "NO_COMPANY_WEBSITE",
+      "EMAIL_DOMAIN_MISMATCH",
+      "FREE_EMAIL_CONTACT"
+    ]
+  },
+  {
+    "code": "CHK_DOMAIN_AGE",
+    "text": "Look up when the company website domain was registered using a public WHOIS lookup. A very recent domain for a company claiming a long history needs an explanation.",
+    "priority": 2,
+    "triggers": [
+      "NO_COMPANY_WEBSITE",
+      "EMAIL_DOMAIN_MISMATCH"
+    ]
+  },
+  {
+    "code": "CHK_OFFICIAL_EMAIL",
+    "text": "Ask the recruiter to write from an email address on the company's own website domain, then confirm that address on the company's official contact page.",
+    "priority": 2,
+    "triggers": [
+      "FREE_EMAIL_CONTACT",
+      "EMAIL_DOMAIN_MISMATCH"
+    ]
+  },
+  {
+    "code": "CHK_EMAIL_DOMAIN_MATCH",
+    "text": "Compare the domain in the recruiter's email with the domain of the company website. If they differ, ask for an explanation and check the spelling for look-alike domains.",
+    "priority": 2,
+    "triggers": [
+      "EMAIL_DOMAIN_MISMATCH"
+    ]
+  },
+  {
+    "code": "CHK_OFFICIAL_CHANNEL",
+    "text": "Move the conversation to an official channel (company email or the careers page) instead of chat apps. Be cautious with offers that only use WhatsApp or Telegram.",
+    "priority": 2,
+    "triggers": [
+      "MESSAGING_APP_ONLY"
+    ]
+  },
+  {
+    "code": "CHK_REQUEST_INTERVIEW",
+    "text": "Ask for a live interview over video, phone or in person with a named interviewer. Be cautious if hiring is decided only through chat or without any interview.",
+    "priority": 2,
+    "triggers": [
+      "NO_INTERVIEW"
+    ]
+  },
+  {
+    "code": "CHK_PRESSURE",
+    "text": "Take your time. A genuine employer will allow you to read the offer and ask questions. Pressure to decide today is a reason to pause and verify.",
+    "priority": 2,
+    "triggers": [
+      "URGENCY_PRESSURE",
+      "EXCESSIVE_HYPE"
+    ]
+  },
+  {
+    "code": "CHK_ASK_DETAILS",
+    "text": "Ask for the full job description, reporting manager, team, work location and working hours in writing. Vague answers are worth noting.",
+    "priority": 3,
+    "triggers": [
+      "VAGUE_DESCRIPTION",
+      "VAGUE_REQUIREMENTS"
+    ]
+  },
+  {
+    "code": "CHK_REQUIRED_SKILLS",
+    "text": "Check that the required skills and responsibilities are specific and match the role title. Ask how your work will be assessed.",
+    "priority": 3,
+    "triggers": [
+      "VAGUE_REQUIREMENTS"
+    ]
+  },
+  {
+    "code": "CHK_MODEL_WORDING",
+    "text": "Some wording in this listing resembles wording often seen in risky listings. This is a pattern, not proof. Verify the employer independently before sharing anything.",
+    "priority": 3,
+    "triggers": [
+      "MODEL_TERM",
+      "MODEL_FEATURE"
+    ]
+  },
+  {
+    "code": "CHK_CORP_CONFIRM",
+    "text": "The contact email matches the company website, which is a positive signal but not proof. Still confirm the recruiter on the company's official page before sharing documents.",
+    "priority": 3,
+    "triggers": [
+      "CORP_EMAIL_MATCHES_WEBSITE"
+    ]
+  },
+  {
+    "code": "CHK_STRUCTURED_PROCESS",
+    "text": "A structured interview is a positive signal. Still confirm the interviewer's name and role on the company's official page.",
+    "priority": 3,
+    "triggers": [
+      "STRUCTURED_INTERVIEW",
+      "DETAILED_REQUIREMENTS",
+      "PAY_IN_EXPECTED_RANGE"
+    ]
+  },
+  {
+    "code": "CHK_GENERAL_RECRUITER",
+    "text": "Find the recruiter on the company's official page or professional profile and message them there to confirm the opportunity is genuine.",
+    "priority": 3,
+    "triggers": [
+      "*"
+    ]
+  },
+  {
+    "code": "CHK_CONTRACT_REVIEW",
+    "text": "Read the offer letter and any contract fully before signing. Check the stated pay, notice period, bond or penalty terms and the company's legal name and address.",
+    "priority": 3,
+    "triggers": [
+      "*"
+    ]
+  },
+  {
+    "code": "CHK_SAFE_PAYMENT",
+    "text": "If any payment is ever requested, stop and verify first. Use traceable methods only after verification, keep receipts, and never pay through personal accounts or gift cards.",
+    "priority": 3,
+    "triggers": [
+      "*"
+    ]
+  },
+  {
+    "code": "CHK_TELL_SOMEONE",
+    "text": "Share the offer with a trusted person, a mentor or your college placement cell and ask them to review it before you accept.",
+    "priority": 3,
+    "triggers": [
+      "*"
+    ]
+  },
+  {
+    "code": "CHK_REPORT_CYBERCRIME",
+    "text": "If you have already lost money, call the national cybercrime helpline 1930 and file a complaint at cybercrime.gov.in as soon as possible, and tell your bank.",
+    "priority": 1,
+    "triggers": [
+      "UPFRONT_FEE",
+      "PERSONAL_DATA_REQUEST"
+    ]
+  },
+  {
+    "code": "CHK_KEEP_EVIDENCE",
+    "text": "Keep screenshots of messages, emails, payment requests and the listing in case you need to report it to the platform or the authorities.",
+    "priority": 3,
+    "triggers": [
+      "UPFRONT_FEE",
+      "PERSONAL_DATA_REQUEST",
+      "GUARANTEED_OFFER_CLAIM"
+    ]
+  }
+]

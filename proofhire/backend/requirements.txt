@@ -1,0 +1,25 @@
+# Guidebook Section 3.2 (full, for laptops and training).
+# Proposed starting ranges, not a tested combination: after everyone has a working
+# environment, run `pip freeze > requirements.lock.txt` once and commit it.
+
+# --- Web API ---
+fastapi==0.142.4
+uvicorn[standard]>=0.35,<1
+pydantic>=2.10,<3
+python-dotenv>=1,<2
+# --- Classical ML and data ---
+scikit-learn==1.7.2
+numpy>=2.0,<2.4
+pandas>=2.2,<3
+scipy>=1.13,<2
+joblib>=1.4,<2
+# --- MySQL and ORM ---
+SQLAlchemy==2.0.54
+PyMySQL>=1.1,<2
+cryptography>=43            # [ADDED] PyMySQL needs it for MySQL 8.x caching_sha2_password
+# --- Auth --- [ADDED]
+bcrypt>=4.2,<5
+PyJWT>=2.9,<3
+# --- HTTP and tests ---
+httpx>=0.27,<1
+pytest>=8,<10
